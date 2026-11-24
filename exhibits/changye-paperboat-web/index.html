@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>长夜纸船 · 公众号交互原型</title>
+  <style>
+    :root{--paper:#f3eddf;--ink:#171512;--gold:#d49a22;--muted:#6e665b}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth;background:#ded8cd}
+    body{margin:0;color:var(--ink);font-family:"Songti SC","STSong",serif;background:#ded8cd}
+    .page{width:min(100%,680px);margin:auto;min-height:100vh;background:var(--paper);overflow:hidden;box-shadow:0 0 42px #0002}
+    .hero{position:relative;width:100%;height:auto;min-height:0;aspect-ratio:3/4;padding:0;display:flex;flex-direction:column;align-items:center;background:var(--paper);overflow:hidden;transition:height .8s cubic-bezier(.2,.8,.2,1),aspect-ratio .8s cubic-bezier(.2,.8,.2,1)}
+    .hero.open{height:0;min-height:0;aspect-ratio:auto}
+    .eyebrow{font:700 13px/1.3 system-ui,sans-serif;letter-spacing:.28em;color:var(--muted)}
+    .eyebrow,h1,.subtitle{position:absolute;z-index:2;text-align:center;width:100%;left:0}
+    .eyebrow{top:4.4%}
+    h1{top:8%;margin:0;font-family:"Songti SC","STSong",serif;font-size:clamp(40px,11vw,68px);line-height:1;letter-spacing:.08em;transform:none}
+    .subtitle{top:16.5%;margin:0;font-size:16px;line-height:1.8;color:#514a41}
+    .scene{position:absolute;left:0;right:0;top:0;bottom:0;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
+    .scene svg{display:none}
+    .scene-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;transition:transform .8s ease,opacity .55s ease}
+    .scene.opening .scene-photo{transform:scale(1.025);opacity:.68}
+    .rough{fill:none;stroke:var(--ink);stroke-width:4.4;stroke-linecap:round;stroke-linejoin:round}
+    .fine{fill:none;stroke:var(--ink);stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+    .ghost{fill:none;stroke:#17151288;stroke-width:1.5;stroke-dasharray:5 6}
+    .ink{fill:var(--ink)}.gold{fill:var(--gold);stroke:var(--ink);stroke-width:2}
+    .boat{transform-origin:340px 220px;animation:bob 2.4s ease-in-out infinite}
+    .spirit{transform-origin:340px 164px;animation:peek 2.4s ease-in-out infinite}
+    .knocks{opacity:.45;animation:blink 1.3s ease-in-out infinite}
+    .prompt{display:block;position:absolute;left:50%;top:88%;z-index:3;transform:translateX(-50%);white-space:nowrap;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:13px;font-weight:500;letter-spacing:.14em;color:#514a41}
+    .prompt:after{content:"";display:none}
+    .hero.open .prompt{opacity:0}
+    .scene.opening .boat{animation:boatOpen 1.35s cubic-bezier(.2,.8,.15,1) forwards}
+    .scene.opening .spirit{animation:spiritJump 1.35s cubic-bezier(.2,.8,.2,1) forwards}
+    .scene.opening .flap-l{animation:flapL 1.05s .18s ease-in-out forwards;transform-origin:286px 216px}
+    .scene.opening .flap-r{animation:flapR 1.05s .18s ease-in-out forwards;transform-origin:394px 216px}
+    .scene.opening .sheet{animation:sheetDrop .72s .68s cubic-bezier(.15,.8,.2,1) forwards}
+    .scene.opening .knocks{animation:impact .35s ease-out forwards}
+    .letter{display:none;position:relative;margin:0;padding:0;background:var(--paper);transform:none}
+    .letter.visible{display:block;animation:reveal .7s ease-out both}
+    .fold-top{position:absolute;left:50%;top:-56px;width:260px;height:95px;transform:translateX(-50%)}
+    .fold-top svg{width:100%;height:100%}
+    section{position:relative;padding:44px 0 50px;border-bottom:2px solid #171512}
+    section:last-child{border:0}
+    .num{position:absolute;left:-12px;top:36px;width:38px;height:38px;border:2px solid var(--ink);border-radius:54% 46% 50% 42%;display:grid;place-items:center;font:800 16px system-ui;background:var(--gold);transform:rotate(-7deg)}
+    h2{margin:0 0 24px 42px;font-family:"Kaiti SC","STKaiti",serif;font-size:31px;line-height:1.2;transform:rotate(-.6deg)}
+    p{font-size:17px;line-height:1.95;margin:0 0 16px}
+    .scribble{font-family:"Kaiti SC","STKaiti",serif;font-size:17px;font-weight:700;display:inline-block;padding:3px 9px;border:2px solid var(--ink);border-radius:50%;transform:rotate(-3deg);background:var(--paper)}
+    .doodle{width:100%;height:115px;margin:20px 0 26px}
+    .storyframe{margin:0 0 30px;position:relative}
+    .storyframe img{display:block;width:100%;height:auto;border:2px solid var(--ink);border-radius:9px 13px 7px 11px;filter:saturate(.86) contrast(1.02);box-shadow:4px 5px 0 #17151212}
+    .storyframe figcaption{margin:9px 4px 0;font-family:"Kaiti SC","STKaiti",serif;font-size:15px;color:var(--muted);transform:rotate(-.5deg)}
+    .storyframe.transition{margin-top:-48px}
+    .storyframe.transition img{border:0;box-shadow:none}
+    .letter>.fold-top,.letter>.storyframe,.letter>section{display:none}
+    .visual-flow{display:block}
+    .visual-flow img{display:block;width:100%;height:auto}
+    .visual-flow img+img{border-top:2px solid var(--ink)}
+    .composite{position:relative;margin:0;overflow:hidden}
+    .composite>img{display:block;width:100%;height:auto}
+    .overlay{position:absolute;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.55;text-shadow:0 0 4px var(--paper),0 0 8px var(--paper)}
+    .overlay b{display:block;font-size:clamp(15px,3.8vw,25px)}
+    .overlay small{font-size:clamp(11px,2.7vw,18px)}
+    .overlay em{color:#ad7207;font-style:normal;margin-right:.55em}
+    .journey .o1{left:36%;top:10%;max-width:42%}.journey .o2{left:8%;top:34%;max-width:43%}.journey .o3{left:10%;top:57%;max-width:38%}
+    .journey .routes-in-image{left:63%;right:3%;top:64.5%;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;font-size:clamp(8px,1.7vw,12px);line-height:1.2;text-shadow:0 1px 0 var(--paper),0 0 3px var(--paper)}
+    .journey .routes-in-image b{font-size:inherit}.journey .routes-in-image span{display:none}
+    .journey .routes-in-image>div,.journey .routes-in-image>a{background:none;padding:0;color:inherit;text-decoration:none;min-height:54px;display:flex;align-items:flex-end;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .journey .routes-in-image>div{cursor:default}
+    .journey .routes-in-image>a:focus-visible{outline:2px dashed #ad7207;outline-offset:3px;border-radius:6px}
+    .journey .routes-in-image .route-hint{grid-column:1/-1;display:block;margin-top:3px;font-size:clamp(8px,1.55vw,11px);font-weight:600;letter-spacing:.04em;color:#5f584f;white-space:nowrap}
+    .journey .lantern-light{position:absolute;top:29.15%;width:3.2%;height:3.25%;border-radius:42% 42% 48% 48%;pointer-events:none;background:rgba(238,167,30,.72);opacity:0;filter:blur(.25px);box-shadow:0 0 0 rgba(238,167,30,0);animation:lanternLight 5.8s ease-in-out infinite;transform-origin:50% 0}
+    .journey .lantern-light:after{content:"";position:absolute;inset:-70%;border-radius:50%;background:radial-gradient(circle,rgba(242,178,48,.36) 0,rgba(242,178,48,.16) 36%,rgba(242,178,48,0) 72%)}
+    .journey .l1{left:57.2%;animation-delay:0s}.journey .l2{left:63.5%;animation-delay:.55s}.journey .l3{left:70.7%;animation-delay:1.1s}.journey .l4{left:78.8%;animation-delay:1.65s}.journey .l5{left:86.9%;animation-delay:2.2s}
+    .closing-card .end{left:8%;right:8%;top:9%;text-align:center;font-family:"Songti SC","STSong",serif}
+    .closing-card .end b{font-size:clamp(27px,7vw,50px);margin-bottom:12px}
+    .closing-card .end small{font-size:clamp(13px,3.2vw,22px)}
+    .steps{display:grid;gap:28px}
+    .step{position:relative;padding-left:48px}
+    .step b{display:block;font-family:"Kaiti SC","STKaiti",serif;font-size:22px;margin-bottom:7px}
+    .step .dot{position:absolute;left:2px;top:1px;width:30px;height:30px;border:2px solid var(--ink);border-radius:50%;display:grid;place-items:center;font:800 14px system-ui}
+    .timeline{margin:25px 0 0;padding-left:18px;border-left:3px solid var(--ink)}
+    .date{position:relative;padding:0 0 27px 28px}
+    .date:before{content:"";position:absolute;left:-27px;top:4px;width:14px;height:14px;background:var(--paper);border:3px solid var(--ink);border-radius:50%}
+    .date.hot:before{background:var(--gold)}
+    .date strong{display:block;font:800 21px/1.2 system-ui;margin-bottom:5px}
+    .privacy{font-size:14px;color:#5f584f;border-top:1px dashed #17151266;padding-top:17px;margin-top:12px}
+    .routes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:28px 0}
+    .route{min-height:128px;border:2px solid var(--ink);border-radius:42% 46% 12px 15px/8% 9% 12px 15px;padding:18px 8px 12px;text-align:center;background:#fbf6eb;transform:rotate(-1deg)}
+    .route:nth-child(2){transform:rotate(1.2deg)}
+    .route svg{width:43px;height:43px;margin-bottom:8px}
+    .route b{display:block;font-family:"Kaiti SC","STKaiti",serif;font-size:17px}
+    .route span{display:block;margin-top:5px;font:12px/1.5 system-ui;color:#625b52}
+    .cta{display:block;width:80%;margin:34px auto 16px;padding:16px;border:3px solid var(--ink);background:var(--gold);color:var(--ink);text-align:center;text-decoration:none;font-family:"Kaiti SC","STKaiti",serif;font-size:24px;font-weight:800;box-shadow:4px 5px 0 var(--ink);transform:rotate(-1deg)}
+    .closing{text-align:center;font-family:"Kaiti SC","STKaiti",serif;font-size:20px;margin-top:31px}
+    @keyframes bob{50%{transform:translateY(-6px) rotate(1deg)}}
+    @keyframes peek{50%{transform:translateY(-4px) rotate(-2deg)}}
+    @keyframes blink{50%{opacity:1}}
+    @keyframes lanternLight{0%,8%{opacity:0;transform:rotate(-1.8deg) scale(.82);box-shadow:0 0 0 rgba(238,167,30,0)}18%,55%{opacity:.96;transform:rotate(1.6deg) scale(1);box-shadow:0 0 13px 5px rgba(238,167,30,.34)}66%,100%{opacity:0;transform:rotate(-1deg) scale(.88);box-shadow:0 0 0 rgba(238,167,30,0)}}
+    @keyframes impact{50%{opacity:1;transform:scale(1.25)}100%{opacity:0}}
+    @keyframes boatOpen{0%{transform:scale(1)}20%{transform:scale(.9,1.1)}50%{transform:scale(1.08,.95)}100%{transform:translateY(-22px) scale(1.02)}}
+    @keyframes spiritJump{0%{transform:translateY(0)}30%{transform:translateY(-54px) rotate(-12deg)}65%{transform:translateY(-83px) rotate(10deg)}100%{transform:translateY(-45px)}}
+    @keyframes flapL{100%{transform:rotate(-42deg) translate(-24px,16px)}}
+    @keyframes flapR{100%{transform:rotate(42deg) translate(24px,16px)}}
+    @keyframes sheetDrop{0%{opacity:0;transform:scaleY(.06)}100%{opacity:1;transform:scaleY(1)}}
+    @keyframes reveal{from{opacity:0;transform:translateY(-40px) rotate(.18deg)}to{opacity:1;transform:translateY(0) rotate(.18deg)}}
+    @keyframes panelTextIn{from{opacity:0;translate:0 10px}to{opacity:1;translate:0 0}}
+    @media(max-width:420px){.hero{padding-top:4vh}.routes{grid-template-columns:1fr}.route{min-height:auto}.letter{margin-left:9px;margin-right:9px}}
+    @media(prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+<main class="page">
+  <header class="hero" id="hero">
+    <div class="eyebrow">小舟 AURACLE · 立冬特别企划</div>
+    <h1>长夜纸船</h1>
+    <p class="subtitle">写下这一岁的欢喜或心事<br>捎给陌生人一句问候</p>
+    <div class="scene" id="scene" role="button" tabindex="0" aria-label="轻触纸船，展开冬安信">
+      <img class="scene-photo" src="opening-paperboat.webp" alt="长夜纸船。轻触画面，展开来信">
+      <svg viewBox="0 0 680 320" role="img" aria-labelledby="boatTitle boatDesc">
+        <title id="boatTitle">初冰渡口上的纸船</title><desc id="boatDesc">轻触纸船后，它会展开成一封冬安信</desc>
+        <path class="fine" d="M5 238 C90 226 144 247 229 237 S393 246 472 235 S601 248 675 237"/>
+        <path class="rough" d="M2 262 L72 252 L108 274 M572 253 L608 273 L676 260"/>
+        <path class="fine" d="M53 217 V177 M50 178 H113 M63 177 V209 M99 178 V210 M47 214 H118"/>
+        <path class="fine" d="M57 219 Q83 230 111 218"/>
+        <path class="fine" d="M617 236 q4-35 12-58 M631 236 q4-28 18-48 M647 237 q7-25 22-38"/>
+        <path class="fine" d="M540 52 q28-34 38 7 q-24 19-38-7"/>
+        <g class="boat">
+          <path class="sheet" d="M269 216 L340 191 L411 216 L398 284 L282 284 Z" fill="#f7f1e4" stroke="var(--ink)" stroke-width="3" opacity="0" style="transform-origin:340px 211px"/>
+          <g class="flap-l"><path class="rough" fill="#f7f1e4" d="M246 213 L340 254 L282 278 Z"/><path class="ghost" d="M246 213 L282 278"/></g>
+          <g class="flap-r"><path class="rough" fill="#f7f1e4" d="M434 213 L340 254 L398 278 Z"/><path class="ghost" d="M434 213 L398 278"/></g>
+          <path class="rough" fill="#f7f1e4" d="M246 213 L340 253 L434 213 L396 283 L283 283 Z"/>
+          <path class="fine" d="M283 283 L340 253 L396 283 M246 213 L340 191 L434 213 M340 191 V253"/>
+        </g>
+        <g class="spirit">
+          <path class="ink" d="M319 197 q-3-41 21-46 q27 5 21 46 z"/>
+          <circle cx="333" cy="176" r="4.5" fill="#f7f1e4"/><circle cx="350" cy="176" r="4.5" fill="#f7f1e4"/>
+          <path class="gold" d="M340 151 q-9-15 2-31 q15 15 4 31 q-4 6-6 0"/>
+        </g>
+        <g class="knocks"><path class="rough" d="M447 185 q22-22 42 0 q-22 22-42 0"/><path class="fine" d="M472 162 l8-13 M490 174 l13-5"/></g>
+      </svg>
+      <div class="prompt">请轻触小船</div>
+    </div>
+  </header>
+
+  <article class="letter" id="letter">
+    <div class="fold-top" aria-hidden="true"><svg viewBox="0 0 260 95"><path class="rough" fill="#f7f1e4" d="M4 88 L65 22 L130 73 L195 22 L256 88"/><path class="fine" d="M65 22 L130 73 L195 22"/></svg></div>
+    <div class="visual-flow">
+      <img src="storyboard-final-direction/02-knock.webp" alt="小灯灵敲醒纸船，纸船开始展开">
+      <figure class="composite journey">
+        <img src="storyboard-final-direction/05-lamp-spirit-journey.webp" alt="纸船活动步骤和报名入口">
+        <i class="lantern-light l1" aria-hidden="true"></i><i class="lantern-light l2" aria-hidden="true"></i><i class="lantern-light l3" aria-hidden="true"></i><i class="lantern-light l4" aria-hidden="true"></i><i class="lantern-light l5" aria-hidden="true"></i>
+        <div class="overlay o1"><b><em>01</em>写一封信</b><small>300 字以内，留下城市与昵称</small></div>
+        <div class="overlay o2"><b><em>02</em>抽冬签 · 点一盏灯</b><small>把一句祝福送给收信人</small></div>
+        <div class="overlay o3"><b><em>03</em>留下邮箱</b><small>只用于收信，不向对方展示</small></div>
+        <div class="overlay routes-in-image">
+          <div aria-label="微信公众号：回复纸船"><b>公众号</b><span>回复「纸船」</span></div>
+          <a href="https://xhslink.cn/o/9GoGPPAxFzB" target="_blank" rel="noopener noreferrer" aria-label="打开小红书官方主页"><b>小红书</b><span>笔记与主页</span></a>
+          <a href="https://www.meetauracle.com/" target="_blank" rel="noopener noreferrer" aria-label="打开 Auracle 官网"><b>官网</b><span>首页 Banner</span></a>
+          <small class="route-hint">点击“小红书”或“官网”即可跳转</small>
+        </div>
+      </figure>
+      <figure class="composite timeline-card">
+        <img src="timeline-user-page-20261030.jpg?v=2" alt="长夜纸船活动时间：11月5日报名开启，11月12日报名截止，11月12日前寄出冬安信，11月13日至14日收到回信">
+      </figure>
+      <figure class="composite closing-card">
+        <img src="storyboard-final-direction/01-lidong-ferry.webp" alt="我们在渡口等你">
+        <div class="overlay end"><b>我们在渡口等你。</b><small>愿这只小船，替你把想说的话送到。</small></div>
+      </figure>
+    </div>
+    <figure class="storyframe transition">
+      <img src="storyboard-final-direction/02-knock.webp" alt="黑色小灯灵轻敲纸船，纸船开始回应">
+      <figcaption>叩、叩——纸船醒了。</figcaption>
+    </figure>
+    <section>
+      <span class="num">01</span><h2>这是一封冬安信</h2>
+      <figure class="storyframe"><img src="storyboard-final-direction/01-lidong-ferry.webp" alt="立冬渡口、初冰、纸船和小灯灵的手绘画面"></figure>
+      <p>写下这一岁的欢喜或心事，寄给一位陌生人；你也会收到一封来信。</p>
+    </section>
+
+    <section>
+      <span class="num">02</span><h2>让纸船出发</h2>
+      <figure class="storyframe"><img src="storyboard-final-direction/03-winter-fortune.webp" alt="小灯灵带着纸船寻找冬签与灯的手绘画面"></figure>
+      <div class="steps">
+        <div class="step"><span class="dot">1</span><b>写信</b><p>300 字以内，留下城市与昵称。</p></div>
+        <div class="step"><span class="dot">2</span><b>抽冬签</b><p>替收信人抽一支冬日签。</p></div>
+        <div class="step"><span class="dot">3</span><b>点灯</b><p>选五盏灯中的一盏，送给 Ta。</p></div>
+        <div class="step"><span class="dot">4</span><b>留邮箱</b><p>只用于收信，不向对方展示。</p></div>
+      </div>
+    </section>
+
+    <section>
+      <span class="num">03</span><h2>记住这几天</h2>
+      <figure class="storyframe"><img src="storyboard-final-direction/04-unfold-letter.webp" alt="纸船沿折痕展开成信纸的手绘分镜"></figure>
+      <div class="timeline">
+        <div class="date"><strong>11 月 5 日</strong>报名开启</div>
+        <div class="date"><strong>11 月 12 日</strong>报名截止，纸船启航</div>
+        <div class="date hot"><strong>11 月 13–14 日 · 21:00</strong>随机一晚，收到冬安信</div>
+      </div>
+      <p class="privacy">限 18 岁以上参与；信件寄出前会经过审核。</p>
+    </section>
+
+    <section>
+      <span class="num">04</span><h2>报名入口</h2>
+      <figure class="storyframe"><img src="storyboard-final-direction/05-lamp-spirit-journey.webp" alt="小灯灵陪纸船穿过长夜抵达收信人的手绘画面"></figure>
+      <div class="routes">
+        <div class="route"><svg viewBox="0 0 48 48"><path class="fine" d="M5 9 h38 v25 H24 l-10 8 v-8 H5z"/><circle class="ink" cx="17" cy="22" r="3"/><circle class="ink" cx="31" cy="22" r="3"/></svg><b>微信公众号</b><span>回复关键词「纸船」</span></div>
+        <div class="route"><svg viewBox="0 0 48 48"><path class="fine" d="M10 5 h28 v38 H10z M15 13 h18 M15 20 h18 M15 27 h12"/></svg><b>小红书</b><span>查看官方笔记与主页</span></div>
+        <div class="route"><svg viewBox="0 0 48 48"><path class="fine" d="M4 9 h40 v28 H4z M4 16 h40 M11 12 h1 M17 12 h1"/><path class="gold" d="M17 23 h16 v8 H17z"/></svg><b>官方网站</b><span>点击首页活动 Banner</span></div>
+      </div>
+    </section>
+  </article>
+</main>
+<script>
+  const scene=document.getElementById('scene');
+  const hero=document.getElementById('hero');
+  const letter=document.getElementById('letter');
+  let opened=false;
+  function openLetter(){if(opened)return;opened=true;scene.classList.add('opening');setTimeout(()=>{hero.classList.add('open');letter.classList.add('visible');setTimeout(()=>letter.scrollIntoView({behavior:'smooth',block:'start'}),220)},1280)}
+  scene.addEventListener('click',openLetter);
+  scene.addEventListener('dblclick',openLetter);
+  scene.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openLetter()}});
+</script>
+</body>
+</html>
